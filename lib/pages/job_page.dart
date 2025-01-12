@@ -1,29 +1,57 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:job_bridge/pages/job_details.dart';
 
+import 'menu_page.dart';
+import 'notification_page.dart';
+import 'profile_page.dart';
+
 class JobPage extends StatefulWidget {
-  const JobPage({super.key});
+  final String userId;
+  const JobPage({super.key, required this.userId});
 
   @override
   State<JobPage> createState() => _JobPageState();
 }
 
 class _JobPageState extends State<JobPage> {
-  final CollectionReference collRef =
-      FirebaseFirestore.instance.collection('jobs');
+  final CollectionReference collRef = FirebaseFirestore.instance.collection('jobs');
 
+  // Fetch user ID of currently logged-in user
   Future<String?> fetchUserId() async {
     User? user = FirebaseAuth.instance.currentUser;
     if (user != null) {
-      return user.uid;  // Return the current logged-in user's ID
+      return user.uid; // Return current user's ID
     } else {
       print('No user is currently logged in');
-      return null;
+      return null; // No user logged in
     }
   }
 
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color.fromARGB(255, 206, 220, 232),
+      appBar: AppBar(
+        backgroundColor: const Color.fromARGB(255, 206, 220, 232),
+        title: const Text("Job Cards", style: TextStyle(color: Colors.black)),
+        elevation: 0,
+      ),
+      body: SingleChildScrollView(
+        child: Column(
+          children: [
+            _buildSearchBar(),
+            const SizedBox(height: 20),
+            jobList(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Search Bar Widget
   Widget _buildSearchBar() {
     return Padding(
       padding: const EdgeInsets.fromLTRB(25, 10, 20, 8),
@@ -64,19 +92,27 @@ class _JobPageState extends State<JobPage> {
     );
   }
 
+  // Display job list
   Widget jobList() {
     return StreamBuilder(
       stream: collRef.snapshots(),
-      builder: (context, AsyncSnapshot snapshot) {
+      builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
         if (!snapshot.hasData) {
           return const Center(child: CircularProgressIndicator());
         }
+        if (snapshot.hasError) {
+          return Center(child: Text("Error: ${snapshot.error}"));
+        }
+
+        // List of jobs
         return ListView.builder(
           padding: EdgeInsets.zero,
           shrinkWrap: true,
-          itemCount: snapshot.data.docs.length,
+          itemCount: snapshot.data!.docs.length,
           itemBuilder: (BuildContext context, int index) {
-            DocumentSnapshot documentSnapshot = snapshot.data.docs[index];
+            DocumentSnapshot documentSnapshot = snapshot.data!.docs[index];
+            Map<String, dynamic> data = documentSnapshot.data() as Map<String, dynamic>;
+
             return Padding(
               padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
               child: ElevatedButton(
@@ -91,17 +127,26 @@ class _JobPageState extends State<JobPage> {
 
                   if (userId != null) {
                     Navigator.push(
-                      context, 
+                      context,
                       MaterialPageRoute(
                         builder: (context) => JobDetailsPage(
-                          documentId: documentSnapshot['documentId'],  // Use documentSnapshot to get the fields
-                          jobId: documentSnapshot['jobId'] ?? '', 
+                          documentId: data['documentId'] ?? '',
+                          job_id: data['job_id'] ?? '',
                           userId: userId,
+                          location: data['location'] ?? '',
+                          company_id: data['company_id'] ?? '',
+                          medSalary: (data['med_salary'] is int) ? data['med_salary'] : 0,
+                          pay_period: data['pay_period'] ?? '',
+                          formattedWorkType: data['formatted_work_type'] ?? '',
+                          formattedExperienceLevel: data['formatted_experience_level'] ?? '',
+                          skills_desc: data['skills_desc'] ?? '',
+                          remote_allowed: data['remote_allowed'] ?? false,
+                          normalizedSalary: data['normalized_salary'] ?? 0,
+                          category: data['category'] ?? '',
                         ),
                       ),
                     );
                   } else {
-                    // Handle the case where userId is not found (e.g., show an error message)
                     print("User not logged in.");
                   }
                 },
@@ -117,7 +162,7 @@ class _JobPageState extends State<JobPage> {
                     children: <Widget>[
                       const SizedBox(height: 10),
                       Text(
-                        documentSnapshot['title'],
+                        data['title'] ?? 'No Title',
                         textAlign: TextAlign.start,
                         style: const TextStyle(
                           fontSize: 25,
@@ -127,7 +172,9 @@ class _JobPageState extends State<JobPage> {
                       ),
                       const SizedBox(height: 10),
                       Text(
-                        documentSnapshot['desc'],
+                        data.containsKey('company_name')
+                            ? data['company_name']
+                            : 'No Company Name',
                         textAlign: TextAlign.start,
                         style: const TextStyle(
                           fontSize: 18,
@@ -146,24 +193,43 @@ class _JobPageState extends State<JobPage> {
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color.fromARGB(255, 242, 236, 233),
-      appBar: AppBar(
-        backgroundColor: const Color.fromARGB(255, 242, 236, 233),
-        title: const Text("Job Cards", style: TextStyle(color: Colors.black)),
-        elevation: 0,
-      ),
-      body: SingleChildScrollView(
-        child: Column(
+  Widget _buildBottomNavigationBar() {
+    return Container(
+        color: Colors.black,
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
-            _buildSearchBar(),
-            const SizedBox(height: 20),
-            jobList(),
+            GestureDetector(
+              onTap: () {
+                Navigator.push(context, MaterialPageRoute(builder: (context) => MenuPage(userId: widget.userId)),
+                );
+              },
+              child: const Icon(FontAwesomeIcons.home, color: Colors.white, size: 24),
+            ),
+            GestureDetector(
+              onTap: () {
+                Navigator.push(context, MaterialPageRoute(builder: (context) => JobPage(userId: widget.userId)),
+                );
+              },
+              child: const Icon(FontAwesomeIcons.thLarge, color: Colors.white, size: 24),
+            ),
+            GestureDetector(
+              onTap: () {
+                Navigator.push(context, MaterialPageRoute(builder: (context) => NotificationPage(userId: widget.userId)),
+                );
+              },
+              child: const Icon(FontAwesomeIcons.bell, color: Colors.white, size: 24),
+            ),
+            GestureDetector(
+              onTap: () {
+                Navigator.push(context, MaterialPageRoute(builder: (context) => ProfilePage(userId: widget.userId)),
+                );
+              },
+              child: const Icon(FontAwesomeIcons.userCircle, color: Colors.white, size: 24),
+            ),
           ],
         ),
-      ),
     );
   }
 }

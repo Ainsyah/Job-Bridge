@@ -144,7 +144,7 @@ class _UserDetailPageState extends State<UserDetailPage> {
       case 1:
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => JobPage()),
+          MaterialPageRoute(builder: (context) => JobPage(userId: widget.userId)),
         );
         break;
       case 2:
@@ -330,7 +330,7 @@ class _UserDetailPageState extends State<UserDetailPage> {
             ),
             GestureDetector(
               onTap: () {
-                Navigator.push(context, MaterialPageRoute(builder: (context) => JobPage()),
+                Navigator.push(context, MaterialPageRoute(builder: (context) => JobPage(userId: widget.userId)),
                 );
               },
               child: const Icon(FontAwesomeIcons.thLarge, color: Colors.white, size: 24),

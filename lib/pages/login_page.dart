@@ -5,6 +5,7 @@ import 'package:job_bridge/components/my_textfield.dart';
 import 'package:job_bridge/components/square_tile.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'menu_page.dart';
+import 'reg_page.dart';
 import 'register_page.dart';
 
 class LoginPage extends StatefulWidget {
@@ -99,11 +100,11 @@ class _LoginPageState extends State<LoginPage> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          backgroundColor: Color.fromARGB(255, 71, 62, 59),
+          backgroundColor: const Color.fromARGB(255, 206, 220, 232),
           title: Text(
             message,
             style: const TextStyle(
-              color: Colors.white,
+              color:  Color.fromARGB(255, 5, 52, 92),
               fontSize: 18,
               fontWeight: FontWeight.bold,
             ),
@@ -113,7 +114,7 @@ class _LoginPageState extends State<LoginPage> {
               onPressed: () {
                 Navigator.of(context).pop(); // Close the dialog
               },
-              child: const Text('OK', style: TextStyle(color: Colors.white)),
+              child: const Text('OK', style: TextStyle(color:  Color.fromARGB(255, 206, 220, 232))),
             ),
           ],
         );
@@ -124,7 +125,7 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const  Color.fromARGB(255, 242, 236, 233),
+      backgroundColor: const Color.fromARGB(255, 5, 52, 92),
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -133,31 +134,15 @@ class _LoginPageState extends State<LoginPage> {
               children: [
                 const SizedBox(height: 50),
 
-                // Logo
-                const Icon(
-                  Icons.phone_android,
-                  size: 20.0,
-                ),
-
-                const SizedBox(height: 30),
-
-                // Hello again!
                 const Text(
-                  'Hello Again!',
+                  'JobBridge',
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
-                    fontSize: 24,
+                    fontSize: 37,
+                    color: Colors.white,
                   ),
                 ),
-                const SizedBox(height: 10),
-                const Text(
-                  'Welcome to JobBridge!',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 20,
-                  ),
-                ),
-                const SizedBox(height: 15),
+                const SizedBox(height: 20),
 
                 // Username textfield
                 MyTextfield(
@@ -185,7 +170,7 @@ class _LoginPageState extends State<LoginPage> {
                     children: [
                       Text(
                         'Forgot Password?',
-                        style: TextStyle(color: Colors.grey[600]),
+                        style: TextStyle(color: const Color.fromARGB(255, 230, 229, 229)),
                       ),
                     ],
                   ),
@@ -197,8 +182,8 @@ class _LoginPageState extends State<LoginPage> {
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
                     fixedSize: const Size(300, 50),
-                    foregroundColor: Colors.white,
-                    backgroundColor: Color.fromARGB(255, 71, 62, 59),
+                    foregroundColor: const Color.fromARGB(255, 5, 52, 92),
+                    backgroundColor: const Color.fromARGB(255, 206, 220, 232),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(15),
                     ),
@@ -219,14 +204,14 @@ class _LoginPageState extends State<LoginPage> {
                       Expanded(
                         child: Divider(
                           thickness: 0.5,
-                          color: Colors.grey[400],
+                          color: const Color.fromARGB(255, 230, 229, 229),
                         ),
                       ),
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 10.0),
                         child: Text(
                           'Or continue with',
-                          style: TextStyle(color: Colors.grey[700]),
+                          style: TextStyle(color: const Color.fromARGB(255, 230, 229, 229)),
                         ),
                       ),
                       Expanded(
@@ -247,14 +232,14 @@ class _LoginPageState extends State<LoginPage> {
                   children: [
                     Text(
                       'Not a member?',
-                      style: TextStyle(color: Colors.grey[700]),
+                      style: TextStyle(color: const Color.fromARGB(255, 230, 229, 229)),
                     ),
                     const SizedBox(width: 4),
                     InkWell(
                       onTap: () {
                         Navigator.of(context).push(
                           MaterialPageRoute(
-                            builder: (context) => RegisterPage(),
+                            builder: (context) => RegPage(),
                           ),
                         );
                       },

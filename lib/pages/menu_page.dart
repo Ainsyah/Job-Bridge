@@ -10,7 +10,7 @@ import 'job_page.dart';
 
 class MenuPage extends StatefulWidget {
   final String userId; // Corrected naming convention
-  const MenuPage({required this.userId});
+  const MenuPage({required this.userId, Key? key}) : super(key: key);
 
   @override
   _MenuPage createState() => _MenuPage();
@@ -58,8 +58,11 @@ class _MenuPage extends State<MenuPage> {
 
   Future<void> fetchJobs() async {
     try {
-      QuerySnapshot snapshot =
-          await FirebaseFirestore.instance.collection('jobs').get();
+      QuerySnapshot snapshot = await FirebaseFirestore.instance
+          .collection('jobs')
+          .where('user_interaction', isEqualTo: widget.userId) // Filter based on user's interactions
+          .get();
+
       setState(() {
         _jobs = snapshot.docs.map((doc) {
           return {
@@ -76,7 +79,7 @@ class _MenuPage extends State<MenuPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color.fromARGB(255, 242, 236, 233),
+      backgroundColor: const Color.fromARGB(255, 206, 220, 232),
       body: Stack(
         children: [
           SingleChildScrollView(
@@ -85,12 +88,10 @@ class _MenuPage extends State<MenuPage> {
               children: [
                 _buildHeader(context),
                 const SizedBox(height: 16),
-                _buildReminder(),
-                const SizedBox(height: 16),
                 _buildStatistics(),
                 const SizedBox(height: 16),
                 _buildJobSection(context),
-                const SizedBox(height: 100), // Space for bottom navigation bar
+                const SizedBox(height: 100),
               ],
             ),
           ),
@@ -107,7 +108,7 @@ class _MenuPage extends State<MenuPage> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color.fromARGB(255, 242, 236, 233),
+        color: const Color.fromARGB(255, 5, 52, 92),
         borderRadius: BorderRadius.circular(15),
         boxShadow: const [
           BoxShadow(
@@ -133,7 +134,7 @@ class _MenuPage extends State<MenuPage> {
                   backgroundColor: Colors.grey[200], // Optional, to set a background color
                   child: Icon(
                     Icons.person,
-                    size: 30, // Icon size
+                    size: 35, // Icon size
                     color: Colors.black, // Icon color
                   ),
                 ),
@@ -143,13 +144,14 @@ class _MenuPage extends State<MenuPage> {
                   children: [
                     const Text(
                       "Welcome back",
-                      style: TextStyle(color: Colors.grey, fontSize: 15),
+                      style: TextStyle(color: Colors.white, fontSize: 18),
                     ),
                     Text(
-                      _userData != null && _userData!['name'] != null? _userData!['name'] : "User", // Null check for user data
+                      _userData != null && _userData!['username'] != null? _userData!['username'] : "User", // Null check for user data
                       style: const TextStyle(
-                        fontSize: 18,
+                        fontSize: 25,
                         fontWeight: FontWeight.bold,
+                        color: Colors.white,
                       ),
                     ),
                   ],
@@ -165,49 +167,7 @@ class _MenuPage extends State<MenuPage> {
                 MaterialPageRoute(builder: (context) => NotificationPage(userId: widget.userId)),
               );
             },
-            child: const FaIcon(FontAwesomeIcons.bell, color: Colors.black),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildReminder() {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      height: 100,
-      width: 350,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(30),
-        color: Colors.orange[100],
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                "Reminder",
-                style: TextStyle(
-                  color: Colors.orange[600],
-                  fontWeight: FontWeight.bold,
-                  fontSize: 20,
-                ),
-              ),
-              const Text(
-                "Interview at Zoom in 1 hour.",
-                style: TextStyle(color: Colors.grey, fontSize: 14),
-              ),
-            ],
-          ),
-          Text(
-            "4:30 PM",
-            style: TextStyle(
-              color: Colors.orange[600],
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-            ),
+            child: const FaIcon(FontAwesomeIcons.bell, color: Colors.white),
           ),
         ],
       ),
@@ -225,14 +185,6 @@ class _MenuPage extends State<MenuPage> {
             children: [
               Text("Statistics", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
               Text("View all", style: TextStyle(color: Colors.grey)),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              _buildStatisticCard("546", "Views", Colors.purple),
-              const SizedBox(width: 16),
-              _buildStatisticCard("84", "Interactions", Colors.orange),
             ],
           ),
         ],
@@ -291,8 +243,18 @@ class _MenuPage extends State<MenuPage> {
           MaterialPageRoute(
             builder: (context) => JobDetailsPage(
               documentId: job['documentId'],
-              jobId: job['jobId'] ?? '',
-              userId: widget.userId, // Pass widget.userId
+              job_id: job['jobId'] ?? '',
+              userId: widget.userId,
+              location: job['location'],
+              company_id: job['company_id'],
+              medSalary: job['med_salary'],
+              pay_period: job['pay_period'],
+              formattedWorkType: job['formatted_work_type'],
+              formattedExperienceLevel: job['formatted_experience_level'],
+              skills_desc: job['skills_desc'],
+              remote_allowed: job['remote_allowed'],
+              normalizedSalary: job['normalized_salary'],
+              category: job['category'], // Pass widget.userId
             ),
           ),
         );
@@ -301,7 +263,7 @@ class _MenuPage extends State<MenuPage> {
         width: 200,
         padding: const EdgeInsets.all(8.0),
         decoration: BoxDecoration(
-          color: const Color.fromARGB(255, 70, 179, 164),
+          color: const Color.fromARGB(255, 241, 221, 228),
           borderRadius: BorderRadius.circular(10.0),
         ),
         child: Column(
@@ -330,32 +292,6 @@ class _MenuPage extends State<MenuPage> {
     );
   }
 
-  Widget _buildStatisticCard(String value, String label, Color color) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(10),
-          boxShadow: const [
-            BoxShadow(
-              color: Colors.black12,
-              blurRadius: 5,
-              offset: Offset(0, 3),
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(value, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
-            Text(label, style: const TextStyle(color: Colors.grey)),
-          ],
-        ),
-      ),
-    );
-  }
-
   Widget _buildBottomNavigationBar() {
     return Container(
         color: Colors.black,
@@ -372,7 +308,7 @@ class _MenuPage extends State<MenuPage> {
             ),
             GestureDetector(
               onTap: () {
-                Navigator.push(context, MaterialPageRoute(builder: (context) => JobPage()),
+                Navigator.push(context, MaterialPageRoute(builder: (context) => JobPage(userId: widget.userId)),
                 );
               },
               child: const Icon(FontAwesomeIcons.thLarge, color: Colors.white, size: 24),

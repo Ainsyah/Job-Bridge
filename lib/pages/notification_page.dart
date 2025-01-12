@@ -30,7 +30,7 @@ class _NotificationPageState extends State<NotificationPage> {
       case 1:
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => JobPage()),
+          MaterialPageRoute(builder: (context) => JobPage(userId: widget.userId)),
         );
         break;
       case 2:
@@ -79,7 +79,7 @@ class _NotificationPageState extends State<NotificationPage> {
             ),
             GestureDetector(
               onTap: () {
-                Navigator.push(context, MaterialPageRoute(builder: (context) => JobPage()),
+                Navigator.push(context, MaterialPageRoute(builder: (context) => JobPage(userId: widget.userId)),
                 );
               },
               child: const Icon(FontAwesomeIcons.thLarge, color: Colors.white, size: 24),

@@ -12,12 +12,6 @@ class StartPage extends StatefulWidget {
 class _StartPageState extends State<StartPage> {
   bool isLoginPage = true; // Toggle between Login and Registration
 
-  void _toggleLoginRegister() {
-    setState(() {
-      isLoginPage = !isLoginPage;
-    });
-  }
-
   void _proceed() {
     if (isLoginPage) {
       // Navigate to Login page
@@ -37,37 +31,49 @@ class _StartPageState extends State<StartPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color.fromARGB(255, 5, 52, 92),
       appBar: AppBar(
-        title: const Text("Welcome to FeedItForward"),
-        backgroundColor: Colors.blue,
+        backgroundColor: const Color.fromARGB(255, 5, 52, 92),
         elevation: 0,
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              "Are you here to search for jobs?"
-            ),
-            const Text(
-              "Create a New Account or Login to Continue",
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-            ),
-            
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: _proceed,
-              child: Text(isLoginPage ? "Login" : "Register"),
-            ),
-            const SizedBox(height: 20),
-            TextButton(
-              onPressed: _toggleLoginRegister,
-              child: Text(isLoginPage
-                  ? "Don't have an account? Register here"
-                  : "Already have an account? Login here"),
-            ),
-          ],
+      body: GestureDetector(
+        onTap: () {
+          // Navigate to Login page when user taps anywhere
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => LoginPage()),
+          );
+        },
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                "Welcome to",
+                style: TextStyle(
+                  fontSize: 40,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+              //const SizedBox(height: 10),
+              Text(
+                "Job Bridge",
+                style: TextStyle(
+                  fontSize: 50,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+              const SizedBox(height: 20),
+              const Text(
+                "Look for jobs here",
+                style: TextStyle(fontSize: 18, color: Colors.white,),
+              ),
+            ],
+          ),
         ),
       ),
     );

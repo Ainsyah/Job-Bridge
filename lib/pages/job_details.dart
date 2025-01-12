@@ -1,76 +1,52 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'job_page.dart';
-import 'menu_page.dart';
-import 'notification_page.dart';
-import 'profile_page.dart';
-import 'recruiters_page.dart';
 
 class JobDetailsPage extends StatelessWidget {
   final String documentId;
-  final String jobId;
+  final String job_id;
   final String userId;
+  final String location;
+  final String company_id;
+  final int medSalary;
+  final String pay_period;
+  final String formattedWorkType;
+  final String formattedExperienceLevel;
+  final String skills_desc;
+  final bool remote_allowed;
+  final double normalizedSalary;
+  final String category;
 
   const JobDetailsPage({
     super.key,
     required this.documentId,
-    required this.jobId,
+    required this.job_id,
     required this.userId,
+    required this.location,
+    required this.company_id,
+    required this.medSalary,
+    required this.pay_period,
+    required this.formattedWorkType,
+    required this.formattedExperienceLevel,
+    required this.skills_desc,
+    required this.remote_allowed,
+    required this.normalizedSalary,
+    required this.category,
   });
-
-  void _onItemTapped(BuildContext context, int index) {
-    switch (index) {
-      case 0:
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => MenuPage(userId: userId)),
-        );
-        break;
-      case 1:
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => JobPage()),
-        );
-        break;
-      case 2:
-        // No action needed, already on the NotificationPage
-        break;
-      case 3:
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => ProfilePage(userId: userId)),
-        );
-        break;
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
-    final CollectionReference jobRef = FirebaseFirestore.instance.collection('jobs');
-    final CollectionReference companyRef = FirebaseFirestore.instance.collection('company');
-
-    const TextStyle headerStyle = TextStyle(
-      fontSize: 20,
-      fontWeight: FontWeight.bold,
-      color: Color.fromARGB(255, 17, 72, 84),
-    );
-
-    const TextStyle normalTextStyle = TextStyle(
-      fontSize: 16,
-      fontWeight: FontWeight.normal,
-    );
+    final CollectionReference jobRef =
+        FirebaseFirestore.instance.collection('jobs');
+    final CollectionReference companyRef =
+        FirebaseFirestore.instance.collection('companies');
 
     return Scaffold(
       appBar: AppBar(
         title: const Text(
           'Job Details',
-          style: TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-          ),
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
-        backgroundColor: const Color.fromARGB(255, 17, 72, 84),
+        backgroundColor: const Color.fromARGB(255, 36, 145, 169),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () {
@@ -96,78 +72,98 @@ class JobDetailsPage extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    jobData['title'],
+                    jobData['title'] ?? 'No Title',
                     style: const TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 10),
-                  Text(jobData['desc'], style: const TextStyle(fontSize: 15)),
+                  Text(
+                    'Location: $location',
+                    style: const TextStyle(fontSize: 18),
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    'Category: $category',
+                    style: const TextStyle(fontSize: 18),
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    'Salary: \$${medSalary.toString()}',
+                    style: const TextStyle(fontSize: 18),
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    'Pay Period: $pay_period',
+                    style: const TextStyle(fontSize: 18),
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    'Work Type: $formattedWorkType',
+                    style: const TextStyle(fontSize: 18),
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    'Experience Level: $formattedExperienceLevel',
+                    style: const TextStyle(fontSize: 18),
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    'Skills Required: $skills_desc',
+                    style: const TextStyle(fontSize: 18),
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    'Remote Allowed: ${remote_allowed ? 'Yes' : 'No'}',
+                    style: const TextStyle(fontSize: 18),
+                  ),
                   const SizedBox(height: 20),
-                  const Text('CONTACT INFORMATION', style: headerStyle),
+                  Text(
+                    'Company Information:',
+                    style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  ),
                   const SizedBox(height: 10),
                   StreamBuilder<DocumentSnapshot>(
-                    stream: companyRef.doc(jobId).snapshots(),
-                    builder: (context, AsyncSnapshot<DocumentSnapshot> compSnapshot) {
-                      if (compSnapshot.hasError) {
-                        return const Text('Error fetching organization data');
+                    stream: companyRef.doc(company_id).snapshots(),
+                    builder: (context, AsyncSnapshot<DocumentSnapshot> companySnapshot) {
+                      if (companySnapshot.hasError) {
+                        return const Text('Error fetching company data');
                       }
-                      if (!compSnapshot.hasData || !compSnapshot.data!.exists) {
-                        return const Text('Organization details not available');
+                      if (!companySnapshot.hasData || !companySnapshot.data!.exists) {
+                        return const Text('Company details not available');
                       }
-                      var compData = compSnapshot.data!;
+                      var companyData = companySnapshot.data!;
                       return Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('Company Name: ${compData['compName']}', style: normalTextStyle),
+                          Text(
+                            'Company Name: ${companyData['company_name']}',
+                            style: const TextStyle(fontSize: 16),
+                          ),
                           const SizedBox(height: 10),
-                          Text('Email: ${compData['compEmail']}', style: normalTextStyle),
-                          const SizedBox(height: 10),
-                          Text('Location: ${compData['compLocation']}', style: normalTextStyle),
+                          Text(
+                            'Company Description: ${companyData['description']}',
+                            style: const TextStyle(fontSize: 16),
+                          ),
                         ],
                       );
                     },
+                  ),
+                  const SizedBox(height: 20),
+                  ElevatedButton(
+                    onPressed: () {
+                      // Action for applying to the job or other functionality
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color.fromARGB(255, 36, 145, 169),
+                      fixedSize: const Size(400, 50),
+                    ),
+                    child: const Text('Apply Now',
+                        style: TextStyle(fontSize: 20, color: Colors.white)),
                   ),
                 ],
               ),
             ),
           );
         },
-      ),
-      bottomNavigationBar: Container(
-        color: Colors.black,
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: [
-            GestureDetector(
-              onTap: () {
-                Navigator.push(context, MaterialPageRoute(builder: (context) => MenuPage(userId: userId)),
-                );
-              },
-              child: const Icon(FontAwesomeIcons.home, color: Colors.white, size: 24),
-            ),
-            GestureDetector(
-              onTap: () {
-                Navigator.push(context, MaterialPageRoute(builder: (context) => JobPage()),
-                );
-              },
-              child: const Icon(FontAwesomeIcons.thLarge, color: Colors.white, size: 24),
-            ),
-            GestureDetector(
-              onTap: () {
-                Navigator.push(context, MaterialPageRoute(builder: (context) => RecruitersPage(userId: userId)),
-                );
-              },
-              child: const Icon(FontAwesomeIcons.bell, color: Colors.white, size: 24),
-            ),
-            GestureDetector(
-              onTap: () {
-                Navigator.push(context, MaterialPageRoute(builder: (context) => ProfilePage(userId: userId)),
-                );
-              },
-              child: const Icon(FontAwesomeIcons.userCircle, color: Colors.white, size: 24),
-            ),
-          ],
-        ),
       ),
     );
   }

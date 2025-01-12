@@ -32,7 +32,7 @@ class _RecruitersPageState extends State<RecruitersPage> {
       case 1:
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => JobPage()),
+          MaterialPageRoute(builder: (context) => JobPage(userId: widget.userId)),
         );
         break;
       case 2:
@@ -179,7 +179,7 @@ class _RecruitersPageState extends State<RecruitersPage> {
               onTap: () {
                 Navigator.pushReplacement(
                   context,
-                  MaterialPageRoute(builder: (context) => JobPage()),
+                  MaterialPageRoute(builder: (context) => JobPage(userId: widget.userId)),
                 );
               },
               child: const Icon(FontAwesomeIcons.thLarge, color: Colors.white, size: 24),
