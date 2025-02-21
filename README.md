@@ -1,4 +1,4 @@
-# JobBridge
+# Job Bridge
 
 JobBridge is a **hybrid job recommendation system** built using **Flutter** and **Firebase**.  
 It leverages **content-based filtering** and **collaborative filtering** to provide personalized job recommendations based on user skills, preferences, and interactions.
