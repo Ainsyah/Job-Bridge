@@ -1,299 +1,413 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:job_bridge/pages/chat_company_detail.dart';
+import 'package:job_bridge/pages/chat_user.dart';
+import 'package:job_bridge/pages/model_manager.dart';
 import 'job_details.dart';
+import 'job_postings.dart';
+import 'prof_page.dart';
 import 'profile_page.dart';
-import 'notification_page.dart';
-import 'recruiters_page.dart';
-import 'job_page.dart';
+import 'saved_jobs.dart';
 
 class MenuPage extends StatefulWidget {
-  final String userId; // Corrected naming convention
-  const MenuPage({required this.userId, Key? key}) : super(key: key);
+  final String userId;
+
+  const MenuPage({
+    Key? key, required this.userId,
+  }) : super(key: key);
 
   @override
-  _MenuPage createState() => _MenuPage();
+  State<MenuPage> createState() => _MenuPageState();
 }
 
-class _MenuPage extends State<MenuPage> {
-  List<Map<String, dynamic>> _jobs = []; // To hold fetched job data
-  Map<String, dynamic>? _userData; // To hold user data
+class _MenuPageState extends State<MenuPage> {
+  final CollectionReference collRef =
+      FirebaseFirestore.instance.collection('job_postings');
+  late Future<List<String>> recommendedJobIdsFuture;
+  String searchQuery = '';
+  String selectedCategory = 'All Categories';
+  String chatId = '';
 
   @override
   void initState() {
     super.initState();
-    fetchUserData();
-    fetchJobs();
+    recommendedJobIdsFuture = fetchRecommendedJobIds();
+    predictJobRecommendations();
   }
 
-  Future<String?> fetchUserId() async {
-    User? user = FirebaseAuth.instance.currentUser;
-    if (user != null) {
-      return user.uid;  // Return the current logged-in user's ID
-    } else {
-      print('No user is currently logged in');
-      return null;
-    }
+  void navigateToPage(BuildContext context, Widget page) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => page),
+    );
   }
 
-  Future<void> fetchUserData() async {
-    try {
-      DocumentSnapshot userDoc = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(widget.userId)
-          .get();
-
-      if (userDoc.exists) {
-        setState(() {
-          _userData = userDoc.data() as Map<String, dynamic>;
-        });
-      } else {
-        print("User document does not exist.");
+  Future<List<String>> getCategories() async {
+    final snapshot = await collRef.get();
+    final categories = <String>['All Categories'];
+    for (var doc in snapshot.docs) {
+      final job = doc.data() as Map<String, dynamic>;
+      final category = job['category'] ?? 'Uncategorized';
+      if (!categories.contains(category)) {
+        categories.add(category);
       }
-    } catch (e) {
-      print("Error fetching user data: $e");
     }
+    return categories;
   }
 
-  Future<void> fetchJobs() async {
-    try {
-      QuerySnapshot snapshot = await FirebaseFirestore.instance
-          .collection('jobs')
-          .where('user_interaction', isEqualTo: widget.userId) // Filter based on user's interactions
-          .get();
+Future<List<String>> fetchRecommendedJobIds() async {
+  try {
+    final snapshot = await FirebaseFirestore.instance
+        .collection('user_recommendations')
+        .doc(widget.userId)
+        .get();
 
-      setState(() {
-        _jobs = snapshot.docs.map((doc) {
-          return {
-            'documentId': doc.id,
-            ...doc.data() as Map<String, dynamic>,
-          };
-        }).toList();
-      });
-    } catch (e) {
-      print("Error fetching jobs: $e");
+    if (snapshot.exists) {
+      final data = snapshot.data() as Map<String, dynamic>;
+      return List<String>.from(data['recommended_jobs'] ?? []);
+    } else {
+      return [];
     }
+  } catch (e) {
+    debugPrint('Error fetching recommended job IDs: $e');
+    return [];
   }
+}
+
+  Future<void> predictJobRecommendations() async {
+  try {
+    // Step 1: Fetch user skills
+    final userDoc = await FirebaseFirestore.instance.collection('users').doc(widget.userId).get();
+    if (!userDoc.exists) {
+      throw Exception("User not found");
+    }
+    final userSkills = List<String>.from(userDoc['skills'] ?? []);
+    print("User Skills: $userSkills"); // Debugging log
+
+    // Step 2: Fetch job postings and filter based on the skills
+    final jobSnapshot = await FirebaseFirestore.instance.collection('job_postings').get();
+    print("Job Postings Count: ${jobSnapshot.docs.length}"); // Debugging log
+    List<String> recommendedJobIds = [];
+
+    for (var doc in jobSnapshot.docs) {
+      final job = doc.data() as Map<String, dynamic>;
+      final jobTitle = job['title']?.toLowerCase() ?? '';
+      final jobDescription = job['description']?.toString().toLowerCase() ?? '';
+      
+      // Simple keyword matching (you can use a more sophisticated matching algorithm)
+      bool matches = false;
+      for (var skill in userSkills) {
+        if (jobTitle.contains(skill.toLowerCase()) || jobDescription.contains(skill.toLowerCase())) {
+          matches = true;
+          break;
+        }
+      }
+
+      if (matches) {
+        recommendedJobIds.add(doc.id); // Add job to recommended list
+      }
+    }
+
+    print("Recommended Job IDs: $recommendedJobIds"); // Debugging log
+
+    // Step 3: Update Firestore with the recommended job IDs for the user
+    await FirebaseFirestore.instance.collection('user_recommendations').doc(widget.userId).set({
+      'recommended_jobs': recommendedJobIds,
+    }, SetOptions(merge: true));
+
+    // Step 4: Refresh the recommended jobs
+    setState(() {
+      recommendedJobIdsFuture = fetchRecommendedJobIds();
+    });
+  } catch (e) {
+    debugPrint("Error predicting job recommendations: $e");
+  }
+}
+
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color.fromARGB(255, 206, 220, 232),
-      body: Stack(
-        children: [
-          SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(vertical: 50),
-            child: Column(
-              children: [
-                _buildHeader(context),
-                const SizedBox(height: 16),
-                _buildStatistics(),
-                const SizedBox(height: 16),
-                _buildJobSection(context),
-                const SizedBox(height: 100),
-              ],
-            ),
-          ),
-          Align(
-            alignment: Alignment.bottomCenter,
-            child: _buildBottomNavigationBar(),
-          ),
-        ],
+      backgroundColor: Colors.white,
+      appBar: AppBar(
+        automaticallyImplyLeading: false,
+        backgroundColor: Colors.white,
+        title: const Text(
+          "Job Bridge",
+          style: TextStyle(
+              color: Color.fromARGB(255, 5, 52, 92),
+              fontWeight: FontWeight.bold),
+        ),
       ),
-    );
-  }
-
-  Widget _buildHeader(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: const Color.fromARGB(255, 5, 52, 92),
-        borderRadius: BorderRadius.circular(15),
-        boxShadow: const [
-          BoxShadow(
-            color: Colors.black12,
-            blurRadius: 10,
-            offset: Offset(0, 5),
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          GestureDetector(
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => ProfilePage(userId: widget.userId)),
-              );
-            },
-            child: Row(
-              children: [
-                CircleAvatar(
-                  radius: 24,
-                  backgroundColor: Colors.grey[200], // Optional, to set a background color
-                  child: Icon(
-                    Icons.person,
-                    size: 35, // Icon size
-                    color: Colors.black, // Icon color
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      "Welcome back",
-                      style: TextStyle(color: Colors.white, fontSize: 18),
+      body: Scrollbar(
+        child: SingleChildScrollView(
+          child: Column(
+            children: [
+              // User Greeting and Profile Section
+              Container(
+                decoration: BoxDecoration(
+                  color: const Color.fromARGB(255, 5, 52, 92),
+                  borderRadius: BorderRadius.circular(0),
+                  boxShadow: [
+                    const BoxShadow(
+                      color: Colors.black12,
+                      blurRadius: 10,
+                      offset: Offset(0, 5),
                     ),
-                    Text(
-                      _userData != null && _userData!['username'] != null? _userData!['username'] : "User", // Null check for user data
-                      style: const TextStyle(
-                        fontSize: 25,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
+                  ],
+                ),
+                child: Column(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Row(
+                        children: [
+                          GestureDetector(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (context) =>
+                                        ProfPage(userId: widget.userId)),
+                              );
+                            },
+                            child: FutureBuilder<DocumentSnapshot>(
+                              future: FirebaseFirestore.instance
+                                  .collection('users')
+                                  .doc(widget.userId)
+                                  .get(),
+                              builder: (context, snapshot) {
+                                if (snapshot.connectionState ==
+                                    ConnectionState.waiting) {
+                                  return const CircularProgressIndicator();
+                                }
+                                if (snapshot.hasError) {
+                                  return const Icon(Icons.error);
+                                }
+                                if (!snapshot.hasData ||
+                                    !snapshot.data!.exists) {
+                                  return const Icon(Icons.error);
+                                }
+
+                                final userData =
+                                    snapshot.data!.data() as Map<String, dynamic>;
+                                final String fullname =
+                                    userData['fullname'] ?? 'No Name';
+
+                                return Row(
+                                  children: [
+                                    CircleAvatar(
+                                      radius: 24,
+                                      child: const Icon(Icons.person,
+                                          size: 30, color: Colors.white),
+                                      backgroundColor: Colors.blueAccent,
+                                    ),
+                                    const SizedBox(width: 16),
+                                    Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        const Text(
+                                          "Welcome back",
+                                          style: TextStyle(
+                                              color: Colors.white, fontSize: 15),
+                                        ),
+                                        Text(fullname,
+                                            style: const TextStyle(
+                                                fontSize: 18,
+                                                fontWeight: FontWeight.bold,
+                                                color: Colors.white)),
+                                      ],
+                                    ),
+                                  ],
+                                );
+                              },
+                            ),
+                          ),
+                          const Spacer(),
+                          GestureDetector(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (context) =>
+                                        ChatCompanyDetail(userId: widget.userId)),
+                              );
+                            },
+                            child: const FaIcon(FontAwesomeIcons.comment,
+                                color: Colors.white),
+                          ),
+                        ],
                       ),
                     ),
                   ],
                 ),
-              ],
-            ),
-          ),
-          const Spacer(),
-          GestureDetector(
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => NotificationPage(userId: widget.userId)),
-              );
-            },
-            child: const FaIcon(FontAwesomeIcons.bell, color: Colors.white),
-          ),
-        ],
-      ),
-    );
-  }
+              ),
 
-  Widget _buildStatistics() {
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text("Statistics", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-              Text("View all", style: TextStyle(color: Colors.grey)),
+              const SizedBox(height: 15),
+
+              // Search Field
+              Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20.0, vertical: 8.0),
+                child: TextField(
+                  decoration: InputDecoration(
+                    hintText: 'Search job titles or companies...',
+                    hintStyle: TextStyle(color: Colors.white),
+                    prefixIcon:
+                        const Icon(Icons.search, color: Colors.white),
+                    fillColor: const Color.fromARGB(255, 5, 52, 92),
+                    filled: true,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(15.0),
+                    ),
+                  ),
+                  onChanged: (value) {
+                    setState(() {
+                      searchQuery = value;
+                    });
+                  },
+                ),
+              ),
+
+              SizedBox(height: 15),
+
+              // Filter Dropdown
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 10.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    FutureBuilder<List<String>>(
+                      future: getCategories(),
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState == ConnectionState.waiting) {
+                          return const CircularProgressIndicator();
+                        }
+                        if (snapshot.hasError || !snapshot.hasData) {
+                          return const Text('Error');
+                        }
+                        final categories = snapshot.data!;
+                        return DropdownButton<String>(
+                          value: selectedCategory,
+                          items: categories.map((String category) {
+                            return DropdownMenuItem<String>(
+                              value: category,
+                              child: Text(
+                                category, 
+                                style: TextStyle(color: Color.fromARGB(255, 5, 52, 92)),
+                                ),
+                                );
+                          }).toList(),
+                          onChanged: (newValue) {
+                            setState(() {
+                              selectedCategory = newValue!;
+                            });
+                          },
+                          icon: Padding(
+                            padding: const EdgeInsets.only(left: 8.0), // Space between text and icon
+                            child: const Icon(Icons.filter_list, color: Color.fromARGB(255, 5, 52, 92)),
+                          ),
+                          isDense: true, // Optional: Make the dropdown compact
+                          dropdownColor:  Colors.white,
+                          style: TextStyle(color: Color.fromARGB(255, 5, 52, 92)),
+                        );
+                      },
+                    ),
+                  ],
+                ),
+              ),
+              SizedBox(height: 20),
+
+              // Job Recommendations Section
+            FutureBuilder<List<String>>(
+              future: fetchRecommendedJobIds(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                if (snapshot.hasError || !snapshot.hasData || snapshot.data!.isEmpty) {
+                  return Center(
+                    child: Column(
+                      children: const [
+                        Text(
+                          'No recommended jobs at the moment.',
+                          style: TextStyle(fontSize: 16, color: Colors.grey),
+                        ),
+                      ],
+                    ),
+                  );
+                }
+
+                final recommendedJobIds = snapshot.data!;
+                return ListView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: recommendedJobIds.length,
+                  itemBuilder: (context, index) {
+                    final documentId = recommendedJobIds[index];
+                    return FutureBuilder<DocumentSnapshot>(
+                      future: FirebaseFirestore.instance
+                          .collection('job_postings')  // Ensure this collection name is correct
+                          .doc(documentId)
+                          .get(),
+                      builder: (context, jobSnapshot) {
+                        if (jobSnapshot.connectionState == ConnectionState.waiting) {
+                          return const Center(child: CircularProgressIndicator());
+                        }
+                        if (jobSnapshot.hasError ||
+                            !jobSnapshot.hasData ||
+                            !jobSnapshot.data!.exists) {
+                          return const SizedBox();
+                        }
+
+                        final jobData = jobSnapshot.data!.data() as Map<String, dynamic>;
+                        final job_id = jobData['job_id'].toString();
+                        final jobTitle = jobData['title'] ?? 'No Title';
+                        final companyName = jobData['company_name'] ?? 'No Company';
+                        final location = jobData['location'] ?? 'No Location';
+                        final normalized_salary = jobData['normalized_salary'] != null
+                           ? int.tryParse(jobData['normalized_salary'].toString()) ?? 0
+                           : 0;
+
+                        return ListTile(
+                          title: Text(jobTitle),
+                          subtitle: Text('$companyName • $location'),
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => JobDetailsPage(
+                                  userId: widget.userId,
+                                  documentId: documentId,
+                                  jobId: job_id,
+                                  title: jobTitle,
+                                  companyName: companyName,
+                                  location: location,
+                                  description: jobData['description'] ?? '',
+                                  payPeriod: jobData['pay_period'] ?? '',
+                                  category: jobData['category'] ?? '',
+                                  formattedWorkType: jobData['formatted_work_type'] ?? '',
+                                  normalized_salary: normalized_salary,
+                                  jobPostingUrl: jobData['job_posting_url'] ?? '',
+                                  chatId: chatId,
+                                ),
+                              ),
+                            );
+                          },
+                        );
+                      },
+                    );
+                  },
+                );
+              },
+            ),
             ],
           ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildJobSection(BuildContext context) {
-    return _jobs.isEmpty
-        ? const Center(child: CircularProgressIndicator())
-        : Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 15),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(10.0),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Suggested Jobs For You',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: Color.fromARGB(255, 17, 72, 84),
-                    fontSize: 16,
-                  ),
-                ),
-                const SizedBox(height: 10),
-                _buildJobList(),
-              ],
-            ),
-          );
-  }
-
-  Widget _buildJobList() {
-    return SizedBox(
-      height: 120,
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        itemCount: _jobs.length,
-        itemBuilder: (context, index) {
-          final job = _jobs[index];
-          return Padding(
-            padding: const EdgeInsets.only(right: 10),
-            child: _jobCard(job),
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _jobCard(Map<String, dynamic> job) {
-    return GestureDetector(
-      onTap: () {
-        Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (context) => JobDetailsPage(
-              documentId: job['documentId'],
-              job_id: job['jobId'] ?? '',
-              userId: widget.userId,
-              location: job['location'],
-              company_id: job['company_id'],
-              medSalary: job['med_salary'],
-              pay_period: job['pay_period'],
-              formattedWorkType: job['formatted_work_type'],
-              formattedExperienceLevel: job['formatted_experience_level'],
-              skills_desc: job['skills_desc'],
-              remote_allowed: job['remote_allowed'],
-              normalizedSalary: job['normalized_salary'],
-              category: job['category'], // Pass widget.userId
-            ),
-          ),
-        );
-      },
-      child: Container(
-        width: 200,
-        padding: const EdgeInsets.all(8.0),
-        decoration: BoxDecoration(
-          color: const Color.fromARGB(255, 241, 221, 228),
-          borderRadius: BorderRadius.circular(10.0),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              job['title'] ?? 'Untitled Job',
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 14,
-                fontWeight: FontWeight.bold,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 5),
-            Text(
-              job['desc'] ?? 'No description available',
-              style: const TextStyle(color: Colors.white, fontSize: 12),
-              textAlign: TextAlign.center,
-              maxLines: 3,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ],
         ),
       ),
-    );
-  }
-
-  Widget _buildBottomNavigationBar() {
-    return Container(
+      bottomNavigationBar: Container(
         color: Colors.black,
         padding: const EdgeInsets.all(16),
         child: Row(
@@ -301,34 +415,43 @@ class _MenuPage extends State<MenuPage> {
           children: [
             GestureDetector(
               onTap: () {
-                Navigator.push(context, MaterialPageRoute(builder: (context) => MenuPage(userId: widget.userId)),
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (context) => MenuPage(userId: widget.userId)),
                 );
               },
               child: const Icon(FontAwesomeIcons.home, color: Colors.white, size: 24),
             ),
             GestureDetector(
               onTap: () {
-                Navigator.push(context, MaterialPageRoute(builder: (context) => JobPage(userId: widget.userId)),
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (context) => JobPostingsPage(userId: widget.userId)),
                 );
               },
-              child: const Icon(FontAwesomeIcons.thLarge, color: Colors.white, size: 24),
+              child: const Icon(FontAwesomeIcons.solidClipboard, color: Colors.white, size: 24),
             ),
             GestureDetector(
               onTap: () {
-                Navigator.push(context, MaterialPageRoute(builder: (context) => NotificationPage(userId: widget.userId)),
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (context) => SavedJobsPage(userId: widget.userId)),
                 );
               },
-              child: const Icon(FontAwesomeIcons.bell, color: Colors.white, size: 24),
+              child: const Icon(FontAwesomeIcons.bookmark, color: Colors.white, size: 24),
             ),
             GestureDetector(
               onTap: () {
-                Navigator.push(context, MaterialPageRoute(builder: (context) => ProfilePage(userId: widget.userId)),
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (context) => ProfPage(userId: widget.userId)),
                 );
               },
               child: const Icon(FontAwesomeIcons.userCircle, color: Colors.white, size: 24),
             ),
           ],
         ),
+      ),
     );
   }
 }

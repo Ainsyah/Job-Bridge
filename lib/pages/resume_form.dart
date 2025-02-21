@@ -2,15 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_typeahead/flutter_typeahead.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'job_page.dart';
+import 'job_postings.dart';
 import 'menu_page.dart';
-import 'notification_page.dart';
 import 'profile_page.dart';
 import 'settings_page.dart';
 
 class ResumeFormPage extends StatefulWidget {
   final String userId;
-  const ResumeFormPage({super.key, required this.userId});
+  final String compId;
+  const ResumeFormPage({super.key, required this.userId, required this.compId});
 
   @override
   _ResumeFormPageState createState() => _ResumeFormPageState();
@@ -122,7 +122,7 @@ class _ResumeFormPageState extends State<ResumeFormPage> {
       case 1:
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => JobPage(userId: widget.userId)),
+          MaterialPageRoute(builder: (context) => SettingsPage()),
         );
         break;
       case 2:
@@ -131,7 +131,7 @@ class _ResumeFormPageState extends State<ResumeFormPage> {
       case 3:
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => ProfilePage(userId: widget.userId)),
+          MaterialPageRoute(builder: (context) => SettingsPage()),
         );
         break;
     }
@@ -313,21 +313,21 @@ class _ResumeFormPageState extends State<ResumeFormPage> {
             ),
             GestureDetector(
               onTap: () {
-                Navigator.push(context, MaterialPageRoute(builder: (context) => JobPage(userId: widget.userId)),
+                Navigator.push(context, MaterialPageRoute(builder: (context) => SettingsPage()),
                 );
               },
               child: const Icon(FontAwesomeIcons.thLarge, color: Colors.white, size: 24),
             ),
             GestureDetector(
               onTap: () {
-                Navigator.push(context, MaterialPageRoute(builder: (context) => NotificationPage(userId: widget.userId)),
+                Navigator.push(context, MaterialPageRoute(builder: (context) => SettingsPage()),
                 );
               },
               child: const Icon(FontAwesomeIcons.bell, color: Colors.white, size: 24),
             ),
             GestureDetector(
               onTap: () {
-                Navigator.push(context, MaterialPageRoute(builder: (context) => ProfilePage(userId: widget.userId)),
+                Navigator.push(context, MaterialPageRoute(builder: (context) => SettingsPage()),
                 );
               },
               child: const Icon(FontAwesomeIcons.userCircle, color: Colors.white, size: 24),

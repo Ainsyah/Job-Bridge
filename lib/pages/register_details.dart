@@ -174,11 +174,11 @@ class _RegisterDetailsPageState extends State<RegisterDetailsPage> {
       );
       
       // Navigate to MenuPage after successful registration
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(
-          builder: (context) => MenuPage(userId: widget.uid),
-          ),
-      );
+      // Navigator.of(context).pushReplacement(
+      //   MaterialPageRoute(
+      //     builder: (context) => MenuPage(userId: widget.uid),
+      //     ),
+      // );
       } on FirebaseAuthException catch (e) {
         // Pop the loading circle
         Navigator.of(context).pop(); // Close the loading dialog
@@ -442,25 +442,25 @@ class _RegisterDetailsPageState extends State<RegisterDetailsPage> {
                                 referenceErrorMessages,
                               ),
                               SizedBox(height: 30),
-                              ElevatedButton(
-                                style: ElevatedButton.styleFrom(
-                                  fixedSize: const Size(300, 50),
-                                  foregroundColor: Colors.white,
-                                  backgroundColor: Color.fromARGB(255, 71, 62, 59),
-                                  textStyle: TextStyle(fontSize: 20),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(15),
-                                  ),
-                                ),
-                                onPressed: () {
-                                  // Navigate to the MenuPage
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(builder: (context) => MenuPage(userId: widget.uid)),
-                                  );
-                                },
-                                child: const Text('Sign Up'),
-                              ),
+                              // ElevatedButton(
+                              //   style: ElevatedButton.styleFrom(
+                              //     fixedSize: const Size(300, 50),
+                              //     foregroundColor: Colors.white,
+                              //     backgroundColor: Color.fromARGB(255, 71, 62, 59),
+                              //     textStyle: TextStyle(fontSize: 20),
+                              //     shape: RoundedRectangleBorder(
+                              //       borderRadius: BorderRadius.circular(15),
+                              //     ),
+                              //   ),
+                              //   onPressed: () {
+                              //     // Navigate to the MenuPage
+                              //     Navigator.push(
+                              //       context,
+                              //       //MaterialPageRoute(builder: (context) => MenuPage(userId: widget.uid)),
+                              //     );
+                              //   },
+                              //   child: const Text('Sign Up'),
+                              // ),
                             ],
                           ),
                       ),

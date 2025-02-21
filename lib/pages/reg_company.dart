@@ -3,27 +3,25 @@ import 'package:flutter/material.dart';
 import 'package:job_bridge/components/my_textfield.dart';
 import 'package:job_bridge/pages/menu_page.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:job_bridge/pages/register_details.dart';
+import 'package:job_bridge/pages/menu_page_comp.dart';
+import 'skills_page.dart';
 import 'login_page.dart';
 
-class RegisterPage extends StatefulWidget {
-  const RegisterPage({super.key});
+class RegCompanyPage extends StatefulWidget {
+  const RegCompanyPage({super.key});
 
   @override
-  State<RegisterPage> createState() => _RegisterPageState();
+  State<RegCompanyPage> createState() => _RegCompanyPageState();
 }
 
-class _RegisterPageState extends State<RegisterPage> {
+class _RegCompanyPageState extends State<RegCompanyPage> {
   // Text editing controllers
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
   final usernameController = TextEditingController();
+  final compNameController = TextEditingController();
+  final compDescController = TextEditingController();
   final confirmPasswordController = TextEditingController();
-  final fullNameController = TextEditingController();
-  final phoneController = TextEditingController();
-  final addressController = TextEditingController();
-  final linkedinURLController = TextEditingController();
-  bool _isWillingToRelocate = false;
 
   // Sign user up method
   void signUserUp() async {
@@ -32,9 +30,7 @@ class _RegisterPageState extends State<RegisterPage> {
       passwordController.text.isEmpty ||
       confirmPasswordController.text.isEmpty ||
       usernameController.text.isEmpty ||
-      fullNameController.text.isEmpty ||
-      phoneController.text.isEmpty ||
-      addressController.text.isEmpty) {
+      compNameController.text.isEmpty) {
     showErrorMessage('Please fill in all fields');
     return;
   }
@@ -61,23 +57,26 @@ class _RegisterPageState extends State<RegisterPage> {
         password: passwordController.text,
       );
 
+      // Check if the user is not null
+      if (userCredential.user == null) {
+        showErrorMessage('Error during registration. Please try again.');
+        return;
+      }
+
       // Get the user's UID
-      String uid = userCredential.user!.uid;
+      String compId = userCredential.user!.uid;
 
       // Create a Firestore reference
       CollectionReference ref =
-          FirebaseFirestore.instance.collection('users');
+          FirebaseFirestore.instance.collection('company');
 
       // Save user data to Firestore
-      await ref.doc(uid).set({
+      await ref.doc(compId).set({
         'email': emailController.text,
         'username': usernameController.text,
-        'fullname': fullNameController.text,
-        'phone': phoneController.text,
-        'address': addressController.text,
-        'linkedin': linkedinURLController.text,
-        'relocate': _isWillingToRelocate,
-      });
+        'comp_name': compNameController.text,
+        'comp_desc': compDescController.text,
+      }, SetOptions(merge: true));
 
       Navigator.of(context).pop(); // Close the loading dialog
       ScaffoldMessenger.of(context)
@@ -86,7 +85,7 @@ class _RegisterPageState extends State<RegisterPage> {
       // Navigate to MenuPage after successful registration
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
-          builder: (context) => RegisterDetailsPage(uid: uid),
+          builder: (context) => MenuPageComp(compId: compId),
         ),
       );
     } on FirebaseAuthException catch (e) {
@@ -103,13 +102,22 @@ class _RegisterPageState extends State<RegisterPage> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          backgroundColor: Color.fromARGB(255, 71, 62, 59),
+          backgroundColor: const Color.fromARGB(255, 206, 220, 232),
           title: Center(
             child: Text(
               message,
-              style: const TextStyle(color: Colors.white, fontSize: 18),
+              style: const TextStyle(color: Color.fromARGB(255, 5, 52, 92), fontSize: 18),
             ),
           ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text(
+                'Close',
+                style: TextStyle(color: Color.fromARGB(255, 5, 52, 92)),
+              ),
+            ),
+          ],
         );
       },
     );
@@ -118,7 +126,7 @@ class _RegisterPageState extends State<RegisterPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color.fromARGB(255, 242, 236, 233),
+      backgroundColor: const Color.fromARGB(255, 5, 52, 92),
       body: SafeArea(
         child: Center(
           child: Scrollbar(
@@ -131,34 +139,46 @@ class _RegisterPageState extends State<RegisterPage> {
                   children: [
                     const SizedBox(height: 50),
                 
-                    // Logo
-                    const Icon(
-                      Icons.phone_android,
-                      size: 50,
+                    Text(
+                      'Job Bridge',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 37,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                
-                    const SizedBox(height: 30),
+
+                    const SizedBox(height: 20),
                 
                     // Let's create an account for you
                     Text(
                       'Let\'s create an account for you!',
                       style: TextStyle(
-                        color: Colors.grey[700],
+                        color: Colors.white,
                         fontSize: 16,
                       ),
                     ),
-                
-                    const SizedBox(height: 10),
-                
-                    // Fullname
+
+                    const SizedBox(height: 15),
+
+                    // Username textfield
                     MyTextfield(
-                      controller: fullNameController,
-                      hintText: 'Fullname',
+                      controller: compNameController,
+                      hintText: 'Company Name',
                       obscureText: false,
                     ),
                 
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 15),
+
+                    // Username textfield
+                    MyTextfield(
+                      controller: compDescController,
+                      hintText: 'Company Description',
+                      obscureText: false,
+                    ),
                 
+                    const SizedBox(height: 15),
+
                     // Username textfield
                     MyTextfield(
                       controller: usernameController,
@@ -167,52 +187,7 @@ class _RegisterPageState extends State<RegisterPage> {
                     ),
                 
                     const SizedBox(height: 10),
-                
-                    // Address
-                    MyTextfield(
-                      controller: addressController,
-                      hintText: 'Address',
-                      obscureText: false,
-                    ),
-            
-                    const SizedBox(height: 10),
-                    
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                      child: Row(
-                        children: [
-                          Checkbox(
-                            value: _isWillingToRelocate,
-                            onChanged: (value) {
-                              setState(() {
-                                _isWillingToRelocate = value!;
-                              });
-                            },
-                          ),
-                          const Text("Willing to Relocate"),
-                        ],
-                      ),
-                    ),
-                
-                    const SizedBox(height: 10),
-                
-                    // Phone
-                    MyTextfield(
-                      controller: phoneController,
-                      hintText: 'Phone',
-                      obscureText: false,
-                    ),
-                
-                    const SizedBox(height: 10),
-                
-                    MyTextfield(
-                      controller: linkedinURLController,
-                      hintText: 'Linked In Profile',
-                      obscureText: false,
-                    ),
-                
-                    const SizedBox(height: 10),
-                
+
                     // Email textfield
                     MyTextfield(
                       controller: emailController,
@@ -244,15 +219,15 @@ class _RegisterPageState extends State<RegisterPage> {
                     ElevatedButton(
                       style: ElevatedButton.styleFrom(
                         fixedSize: const Size(300, 50),
-                        foregroundColor: Colors.white,
-                        backgroundColor: Color.fromARGB(255, 71, 62, 59),
+                        foregroundColor: const Color.fromARGB(255, 5, 52, 92),
+                        backgroundColor: Color.fromARGB(255, 206, 220, 232),
                         textStyle: TextStyle(fontSize: 20),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(15),
                         ),
                       ),
                       onPressed: signUserUp,
-                      child: const Text('Sign Up'),
+                      child: const Text('Sign Up', style: TextStyle(fontWeight: FontWeight.bold),),
                     ),
                 
                     const SizedBox(height: 30),
@@ -272,7 +247,7 @@ class _RegisterPageState extends State<RegisterPage> {
                             padding: const EdgeInsets.symmetric(horizontal: 10.0),
                             child: Text(
                               'Or continue with',
-                              style: TextStyle(color: Colors.grey[700]),
+                              style: TextStyle(color: const Color.fromARGB(255, 230, 229, 229)),
                             ),
                           ),
                           Expanded(
@@ -292,7 +267,7 @@ class _RegisterPageState extends State<RegisterPage> {
                       children: [
                         Text(
                           'Already have an account?',
-                          style: TextStyle(color: Colors.grey[700]),
+                          style: TextStyle(color: const Color.fromARGB(255, 230, 229, 229)),
                         ),
                         const SizedBox(width: 4),
                         GestureDetector(

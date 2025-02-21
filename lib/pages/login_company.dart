@@ -6,24 +6,23 @@ import 'package:job_bridge/components/square_tile.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:job_bridge/pages/start_page_sec.dart';
 import 'menu_page.dart';
-import 'reg_page.dart';
-import 'register_page.dart';
+import 'menu_page_comp.dart';
 
-class LoginPage extends StatefulWidget {
+class LoginCompany extends StatefulWidget {
   final TextEditingController? usernameController;
   final TextEditingController? passwordController;
 
-  const LoginPage({
+  const LoginCompany({
     super.key,
     this.usernameController,
     this.passwordController,
   });
 
   @override
-  State<LoginPage> createState() => _LoginPageState();
+  State<LoginCompany> createState() => _LoginCompanyState();
 }
 
-class _LoginPageState extends State<LoginPage> {
+class _LoginCompanyState extends State<LoginCompany> {
   late TextEditingController usernameController;
   late TextEditingController passwordController;
 
@@ -56,7 +55,7 @@ class _LoginPageState extends State<LoginPage> {
     // Try sign in
     try {
       var userDoc = await FirebaseFirestore.instance
-          .collection('users')
+          .collection('company')
           .where('username', isEqualTo: usernameController.text)
           .get();
 
@@ -69,7 +68,7 @@ class _LoginPageState extends State<LoginPage> {
 
       // Get the email associated with the username
       String email = userDoc.docs.first['email'];
-      String userId = userDoc.docs.first.id;
+      String compId = userDoc.docs.first.id;
 
       await FirebaseAuth.instance.signInWithEmailAndPassword(
         email: email,
@@ -83,8 +82,8 @@ class _LoginPageState extends State<LoginPage> {
       // Navigate to home page
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
-          builder: (context) => MenuPage(
-            userId: userId,
+          builder: (context) => MenuPageComp(
+            compId: compId,
           ),
         ),
       );

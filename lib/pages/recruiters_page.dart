@@ -1,14 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:job_bridge/pages/post_job_page.dart';
-import 'job_page.dart';
-import 'menu_page.dart';
-import 'notification_page.dart';
-import 'profile_page.dart';
+import 'js_listing_page.dart';
+import 'menu_page_comp.dart';
+import 'prof_comp_page.dart';
 
 class RecruitersPage extends StatefulWidget {
-  final String userId;
-  const RecruitersPage({super.key, required this.userId});
+  final String compId;
+  const RecruitersPage({super.key, required this.compId});
 
   @override
   _RecruitersPageState createState() => _RecruitersPageState();
@@ -26,13 +25,13 @@ class _RecruitersPageState extends State<RecruitersPage> {
       case 0:
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => MenuPage(userId: widget.userId)),
+          MaterialPageRoute(builder: (context) => MenuPageComp(compId: widget.compId)),
         );
         break;
       case 1:
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => JobPage(userId: widget.userId)),
+          MaterialPageRoute(builder: (context) => JsListingPage(compId: widget.compId)),
         );
         break;
       case 2:
@@ -41,7 +40,7 @@ class _RecruitersPageState extends State<RecruitersPage> {
       case 3:
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => ProfilePage(userId: widget.userId)),
+          MaterialPageRoute(builder: (context) => ProfCompPage(compId: widget.compId)),
         );
         break;
     }
@@ -84,7 +83,7 @@ class _RecruitersPageState extends State<RecruitersPage> {
                     onPressed: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => PostJobPage(userId: widget.userId)),
+                        MaterialPageRoute(builder: (context) => PostJobPage(compId: widget.compId)),
                       );
                     },
                     style: ElevatedButton.styleFrom(
@@ -170,7 +169,7 @@ class _RecruitersPageState extends State<RecruitersPage> {
               onTap: () {
                 Navigator.pushReplacement(
                   context,
-                  MaterialPageRoute(builder: (context) => MenuPage(userId: widget.userId)),
+                  MaterialPageRoute(builder: (context) => MenuPageComp(compId: widget.compId)),
                 );
               },
               child: const Icon(FontAwesomeIcons.home, color: Colors.white, size: 24),
@@ -179,25 +178,25 @@ class _RecruitersPageState extends State<RecruitersPage> {
               onTap: () {
                 Navigator.pushReplacement(
                   context,
-                  MaterialPageRoute(builder: (context) => JobPage(userId: widget.userId)),
+                  MaterialPageRoute(builder: (context) => JsListingPage(compId: widget.compId)),
                 );
               },
-              child: const Icon(FontAwesomeIcons.thLarge, color: Colors.white, size: 24),
+              child: const Icon(FontAwesomeIcons.fileLines, color: Colors.white, size: 24),
             ),
             GestureDetector(
               onTap: () {
                 Navigator.pushReplacement(
                   context,
-                  MaterialPageRoute(builder: (context) => NotificationPage(userId: widget.userId)),
+                  MaterialPageRoute(builder: (context) => RecruitersPage(compId: widget.compId)),
                 );
               },
-              child: const Icon(FontAwesomeIcons.bell, color: Colors.white, size: 24),
+              child: const Icon(FontAwesomeIcons.briefcase, color: Colors.white, size: 24),
             ),
             GestureDetector(
               onTap: () {
                 Navigator.pushReplacement(
                   context,
-                  MaterialPageRoute(builder: (context) => ProfilePage(userId: widget.userId)),
+                  MaterialPageRoute(builder: (context) => ProfCompPage(compId: widget.compId)),
                 );
               },
               child: const Icon(FontAwesomeIcons.userCircle, color: Colors.white, size: 24),

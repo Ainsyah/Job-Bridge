@@ -2,15 +2,17 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'job_page.dart';
+import 'package:job_bridge/pages/settings_page.dart';
+import 'package:job_bridge/pages/test_job_details.dart';
+import 'job_postings.dart';
 import 'login_page.dart';
 import 'menu_page.dart';
-import 'notification_page.dart';
 import 'user_details_page.dart';
 
 class ProfilePage extends StatefulWidget {
   final String userId;
-  const ProfilePage({super.key, required this.userId});
+  final String compId;
+  const ProfilePage({super.key, required this.userId, required this.compId});
 
   @override
   _ProfilePageState createState() => _ProfilePageState();
@@ -34,25 +36,25 @@ class _ProfilePageState extends State<ProfilePage> {
       case 0:
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => MenuPage(userId: widget.userId)),
+          MaterialPageRoute(builder: (context) => SettingsPage()),
         );
         break;
       case 1:
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => JobPage(userId: widget.userId)),
+          MaterialPageRoute(builder: (context) => SettingsPage()),
         );
         break;
       case 2:
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => NotificationPage(userId: widget.userId)),
+          MaterialPageRoute(builder: (context) => SettingsPage()),
         );
         break;
       case 3:
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => ProfilePage(userId: widget.userId)),
+          MaterialPageRoute(builder: (context) => ProfilePage(userId: widget.userId, compId: widget.compId)),
         );
         break;
     }
@@ -216,7 +218,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   onTap: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => UserDetailPage(userId: widget.userId)),
+                      MaterialPageRoute(builder: (context) => SettingsPage()),
                     );
                   },
                   child: Padding(
@@ -302,7 +304,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   onTap: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => UserDetailPage(userId: widget.userId)),
+                      MaterialPageRoute(builder: (context) => SettingsPage()),
                     );
                   },
                   child: Padding(
@@ -421,7 +423,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   onTap: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => UserDetailPage(userId: widget.userId)),
+                      MaterialPageRoute(builder: (context) => SettingsPage()),
                     );
                   },
                   child: Padding(
@@ -582,7 +584,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   onTap: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => UserDetailPage(userId: widget.userId)),
+                      MaterialPageRoute(builder: (context) => SettingsPage()),
                     );
                   },
                   child: Padding(
@@ -790,7 +792,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   onTap: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => UserDetailPage(userId: widget.userId)),
+                      MaterialPageRoute(builder: (context) => SettingsPage()),
                     );
                   },
                   child: Padding(
@@ -881,30 +883,30 @@ class _ProfilePageState extends State<ProfilePage> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
+            // GestureDetector(
+            //   onTap: () {
+            //     Navigator.push(context, MaterialPageRoute(builder: (context) => MenuPage(userId: widget.userId)),
+            //     );
+            //   },
+            //   child: const Icon(FontAwesomeIcons.home, color: Colors.white, size: 24),
+            // ),
+            // GestureDetector(
+            //   onTap: () {
+            //     Navigator.push(context, MaterialPageRoute(builder: (context) => JobPostingsPage(userId: widget.userId, chatId: widget.chatId)),
+            //     );
+            //   },
+            //   child: const Icon(FontAwesomeIcons.thLarge, color: Colors.white, size: 24),
+            // ),
             GestureDetector(
               onTap: () {
-                Navigator.push(context, MaterialPageRoute(builder: (context) => MenuPage(userId: widget.userId)),
-                );
-              },
-              child: const Icon(FontAwesomeIcons.home, color: Colors.white, size: 24),
-            ),
-            GestureDetector(
-              onTap: () {
-                Navigator.push(context, MaterialPageRoute(builder: (context) => JobPage(userId: widget.userId)),
-                );
-              },
-              child: const Icon(FontAwesomeIcons.thLarge, color: Colors.white, size: 24),
-            ),
-            GestureDetector(
-              onTap: () {
-                Navigator.push(context, MaterialPageRoute(builder: (context) => NotificationPage(userId: widget.userId)),
+                Navigator.push(context, MaterialPageRoute(builder: (context) => SettingsPage()),
                 );
               },
               child: const Icon(FontAwesomeIcons.bell, color: Colors.white, size: 24),
             ),
             GestureDetector(
               onTap: () {
-                Navigator.push(context, MaterialPageRoute(builder: (context) => ProfilePage(userId: widget.userId)),
+                Navigator.push(context, MaterialPageRoute(builder: (context) => ProfilePage(userId: widget.userId, compId: widget.compId)),
                 );
               },
               child: const Icon(FontAwesomeIcons.userCircle, color: Colors.white, size: 24),

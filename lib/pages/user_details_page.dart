@@ -1,11 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'job_page.dart';
-import 'menu_page.dart';
-import 'notification_page.dart';
-import 'profile_page.dart';
-import 'settings_page.dart';
 
 class UserDetailPage extends StatefulWidget {
   final String userId;
@@ -18,338 +12,214 @@ class UserDetailPage extends StatefulWidget {
 class _UserDetailPageState extends State<UserDetailPage> {
   final TextEditingController _fullNameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _addressController = TextEditingController();
-  final TextEditingController _phoneController = TextEditingController();
-  final TextEditingController skillController = TextEditingController();
+  final TextEditingController _programmeController = TextEditingController();
+  final TextEditingController _fieldOfStudyController = TextEditingController();
+  final TextEditingController _uniNameController = TextEditingController();
+  final TextEditingController _gradController = TextEditingController();
+  final TextEditingController _gpaController = TextEditingController();
+  final TextEditingController _skillInputController = TextEditingController();
 
-  int _selectedIndex = 2;  // Set default to NotificationPage
-  bool _isWillingToRelocate = false;
-  bool _isEditingCountry = false;
-  bool isTechSkill = true;
+  List<String> _skills = [];
+  String _selectedEduType = "Degree";
+  bool _isLoading = true;
 
-  final CollectionReference collRef = FirebaseFirestore.instance.collection('users');
-  late Future<DocumentSnapshot> userData;
-  List<String> techSkills = [];
-  List<String> softSkills = [];
-
-  final List<String> states = [
-    'Kuala Lumpur, Kuala Lumpur', 'Shah Alam, Selangor', 'Petaling Jaya, Selangor', 'Batu Caves, Selangor',
-    'Subang Jaya, Selangor', 'Klang, Selangor', 'Kajang, Selangor', 'Ampang, Selangor', 'Gombak, Selangor',
-    'Cyberjaya, Selangor', 'Sepang, Selangor', 'George Town, Penang', 'Butterworth, Penang', 'Bayan Lepas, Penang',
-    'Bukit Mertajam, Penang', 'Ipoh, Perak', 'Taiping, Perak', 'Teluk Intan, Perak', 'Lumut, Perak', 'Manjung, Perak',
-    'Kampar, Perak', 'Kuala Kangsar, Perak', 'Johor Bahru, Johor', 'Batu Pahat, Johor', 'Kluang, Johor', 'Muar, Johor',
-    'Kulai, Johor', 'Pontian, Johor', 'Segamat, Johor', 'Kota Tinggi, Johor', 'Mersing, Johor', 'Tangkak, Johor',
-    'Kuantan, Pahang', 'Temerloh, Pahang', 'Bentong, Pahang', 'Pekan, Pahang', 'Raub, Pahang', 'Jerantut, Pahang',
-    'Cameron Highlands, Pahang', 'Kota Bharu, Kelantan', 'Pasir Mas, Kelantan', 'Tanah Merah, Kelantan', 'Machang, Kelantan',
-    'Kuala Krai, Kelantan', 'Tumpat, Kelantan', 'Gua Musang, Kelantan', 'Kuching, Sarawak', 'Miri, Sarawak', 'Sibu, Sarawak',
-    'Bintulu, Sarawak','Sri Aman, Sarawak', 'Kapit, Sarawak', 'Kota Kinabalu, Sabah', 'Sandakan, Sabah', 'Tawau, Sabah',
-    'Lahad Datu, Sabah', 'Keningau, Sabah', 'Ranau, Sabah', 'Semporna, Sabah', 'Melaka City, Melaka', 'Alor Gajah, Melaka',
-    'Jasin, Melaka', 'Alor Setar, Kedah', 'Sungai Petani, Kedah', 'Kulim, Kedah', 'Langkawi, Kedah', 'Baling, Kedah',
-    'Jitra, Kedah', 'Gurun, Kedah', 'Seremban, Negeri Sembilan', 'Port Dickson, Negeri Sembilan', 'Nilai, Negeri Sembilan',
-    'Bahau, Negeri Sembilan', 'Kuala Terengganu, Terengganu', 'Dungun, Terengganu', 'Kemaman, Terengganu', 'Marang, Terengganu',
-    'Besut, Terengganu', 'Setiu, Terengganu', 'Kangar, Perlis', 'Kuala Perlis, Perlis', 'Arau, Perlis', 'Putrajaya, Federal Territory',
-    'Labuan, Federal Territory',
-  ];
+  final CollectionReference usersCollection =
+      FirebaseFirestore.instance.collection('users');
 
   @override
   void initState() {
     super.initState();
-    userData = collRef.doc(widget.userId).get();
-    fetchSkills();
     fetchUserData();
   }
 
-    // Fetch user data from Firestore and update the text controllers
   Future<void> fetchUserData() async {
-    final userDoc = await collRef.doc(widget.userId).get();
-    if (userDoc.exists) {
-      final data = userDoc.data() as Map<String, dynamic>;
+    try {
+      DocumentSnapshot userDoc =
+          await usersCollection.doc(widget.userId).get();
+
+      if (userDoc.exists) {
+        final data = userDoc.data() as Map<String, dynamic>? ?? {};
+        final academicData =
+            data['academicQualification'] as Map<String, dynamic>? ?? {};
+
+        setState(() {
+          _fullNameController.text = data['fullname'] ?? '';
+          _emailController.text = data['email'] ?? '';
+          _programmeController.text = academicData['programme'] ?? '';
+          _fieldOfStudyController.text = academicData['fieldOfStudy'] ?? '';
+          _uniNameController.text = academicData['university'] ?? '';
+          _gradController.text = academicData['grad'] ?? '';
+          _gpaController.text = academicData['gpa'] ?? '';
+          _selectedEduType = academicData['educationType'] ?? 'Degree';
+          _skills = List<String>.from(data['skills'] ?? []);
+          _isLoading = false;
+        });
+      } else {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      debugPrint("Error fetching user data: $e");
       setState(() {
-        _fullNameController.text = data['fullname'] ?? '';
-        _emailController.text = data['email'] ?? '';
-        _phoneController.text = data['phone'] ?? '';
-        _addressController.text = data['address'] ?? '';
-        _isWillingToRelocate = data['willingToRelocate'] ?? false;
-        techSkills = List<String>.from(data['techSkills'] ?? []);
-        softSkills = List<String>.from(data['softSkills'] ?? []);
+        _isLoading = false;
       });
     }
   }
 
   Future<void> saveUserData() async {
-    await collRef.doc(widget.userId).update({
-      'fullname': _fullNameController.text,
-      'email': _emailController.text,
-      'phone': _phoneController.text,
-      'address': _addressController.text,
-      'willingToRelocate': _isWillingToRelocate,
-      'techSkills': techSkills,
-      'softSkills': softSkills,
-    });
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('User information updated successfully')),
-    );
-  }
+    try {
+      await usersCollection.doc(widget.userId).set({
+        'fullname': _fullNameController.text.trim(),
+        'email': _emailController.text.trim(),
+        'academicQualification': {
+          'programme': _programmeController.text.trim(),
+          'fieldOfStudy': _fieldOfStudyController.text.trim(),
+          'university': _uniNameController.text.trim(),
+          'grad': _gradController.text.trim(),
+          'gpa': _gpaController.text.trim(),
+          'educationType': _selectedEduType,
+        },
+        'skills': _skills,
+      }, SetOptions(merge: true));
 
-    Future<void> fetchSkills() async {
-    final userDoc = await collRef.doc(widget.userId).get();
-    setState(() {
-      techSkills = List<String>.from(userDoc['techSkills'] ?? []);
-      softSkills = List<String>.from(userDoc['techSkills'] ?? []);
-    });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('User information updated successfully')),
+      );
+    } catch (e) {
+      debugPrint("Error saving user data: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Failed to update user information')),
+      );
+    }
   }
 
   void addSkill() {
-    final skill = skillController.text.trim();
-    if (skill.isNotEmpty) {
+    String skill = _skillInputController.text.trim();
+    if (skill.isNotEmpty && !_skills.contains(skill)) {
       setState(() {
-        if (isTechSkill) {
-          techSkills.add(skill);
-        } else {
-          softSkills.add(skill);
-        }
+        _skills.add(skill);
+        _skillInputController.clear();
       });
-      skillController.clear();
     }
   }
 
-  void removeSkill(List<String> skillList, String skill) {
+  void removeSkill(String skill) {
     setState(() {
-      skillList.remove(skill);
+      _skills.remove(skill);
     });
   }
 
-  Future<void> saveSkills() async {
-    await collRef.doc(widget.userId).update({
-      'techSkills': techSkills,
-      'softSkills': softSkills,
-    });
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Skills updated successfully')),
-    );
-  }
-  
-  void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
-
-    switch (index) {
-      case 0:
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => MenuPage(userId: widget.userId)),
-        );
-        break;
-      case 1:
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => JobPage(userId: widget.userId)),
-        );
-        break;
-      case 2:
-        // No action needed, already on the NotificationPage
-        break;
-      case 3:
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => ProfilePage(userId: widget.userId)),
-        );
-        break;
-    }
-  }
-
-  void _saveContactInfo() {
-    String phone = _phoneController.text;
-    String email = _emailController.text;
-    String address = _addressController.text;
-    String fullname = _fullNameController.text;
-    bool relocate = _isWillingToRelocate;
-
-    // Add your saving logic here (e.g., saving to a database or Firebase)
-    print('Saved: $fullname $email, $address, $phone, $relocate');
-    
-    // Optionally show a confirmation message
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Contact Information Saved')),
-    );
+  @override
+  void dispose() {
+    _fullNameController.dispose();
+    _emailController.dispose();
+    _programmeController.dispose();
+    _fieldOfStudyController.dispose();
+    _uniNameController.dispose();
+    _gradController.dispose();
+    _gpaController.dispose();
+    _skillInputController.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color.fromARGB(255, 242, 236, 233),
+      backgroundColor: Colors.white,
       appBar: AppBar(
-        backgroundColor: const Color.fromARGB(255, 242, 236, 233),
-        elevation: 0,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.menu, color: Colors.black),
-            onPressed: () {
-              Navigator.push(context, MaterialPageRoute(builder: (context) => SettingsPage()));
-            },
-          ),
-        ],
+        title: const Text("Edit Profile", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),),
+        backgroundColor: Color.fromARGB(255, 5, 52, 92),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 25.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              "Edit User Information",
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Color.fromARGB(255, 77, 54, 45)),
-            ),
-            const SizedBox(height: 20),
-            TextField(
-              controller: _fullNameController,
-              decoration: const InputDecoration(labelText: 'Full Name'),
-            ),
-            const SizedBox(height: 10),
-            TextField(
-              controller: _emailController,
-              decoration: const InputDecoration(labelText: 'Email'),
-            ),
-            const SizedBox(height: 10),
-            TextField(
-              controller: _phoneController,
-              decoration: const InputDecoration(labelText: 'Phone'),
-            ),
-            const SizedBox(height: 20),
-            DropdownButtonFormField<String>(
-              value: _addressController.text.isEmpty ? null : _addressController.text,
-              items: states.map((state) {
-                return DropdownMenuItem(value: state, child: Text(state));
-              }).toList(),
-              onChanged: (value) {
-                setState(() {
-                  _addressController.text = value ?? '';
-                });
-              },
-              decoration: const InputDecoration(labelText: 'Address'),
-            ),
-            const SizedBox(height: 20),
-            TextField(
-              controller: skillController,
-              decoration: InputDecoration(
-                labelText: 'Add Skill',
-                suffixIcon: IconButton(
-                  icon: const Icon(Icons.add),
-                  onPressed: addSkill,
-                ),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : SingleChildScrollView(
+              padding: const EdgeInsets.all(20.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    "Edit User Information",
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: Color.fromARGB(255, 5, 52, 92),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  _buildTextField(_fullNameController, 'Full Name'),
+                  _buildTextField(_emailController, 'Email'),
+                  const SizedBox(height: 20),
+                  const Text(
+                    "Academic Background",
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 10),
+                  _buildTextField(_programmeController, 'Programme Name'),
+                  _buildTextField(_fieldOfStudyController, 'Field of Study'),
+                  _buildTextField(_uniNameController, 'University'),
+                  _buildTextField(_gradController, 'Graduation Year'),
+                  _buildTextField(_gpaController, 'CGPA'),
+                  const SizedBox(height: 20),
+                  const Text(
+                    "Skills",
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildTextField(_skillInputController, 'Add Skill'),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.add),
+                        onPressed: addSkill,
+                      ),
+                    ],
+                  ),
+                  Wrap(
+                    spacing: 8.0,
+                    children: _skills
+                        .map(
+                          (skill) => Chip(
+                            label: Text(skill),
+                            onDeleted: () => removeSkill(skill),
+                          ),
+                        )
+                        .toList(),
+                  ),
+                  const SizedBox(height: 20),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      onPressed: _isLoading ? null : saveUserData,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.blueAccent,
+                        padding: const EdgeInsets.symmetric(vertical: 15),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(15),
+                        ),
+                      ),
+                      child: const Text(
+                        'Save',
+                        style: TextStyle(fontSize: 16, color: Colors.white),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                const Text('Skill Type:', style: TextStyle(fontSize: 16),),
-                const SizedBox(width: 8),
-                DropdownButton<bool>(
-                  value: isTechSkill,
-                  items: const [
-                    DropdownMenuItem(value: true, child: Text('Technical')),
-                    DropdownMenuItem(value: false, child: Text('Soft')),
-                  ],
-                  onChanged: (value) {
-                    setState(() {
-                      isTechSkill = value ?? true;
-                    });
-                  },
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            const Text('Technical Skills:', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: techSkills
-                  .map((skill) => Chip(
-                        label: Text(skill),
-                        deleteIcon: const Icon(Icons.close),
-                        onDeleted: () => removeSkill(techSkills, skill),
-                      ))
-                  .toList(),
-            ),
-            const SizedBox(height: 16),
-            const Text('Soft Skills:', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: softSkills
-                  .map((skill) => Chip(
-                        label: Text(skill),
-                        deleteIcon: const Icon(Icons.close),
-                        onDeleted: () => removeSkill(softSkills, skill),
-                      ))
-                  .toList(),
-            ),
-            const SizedBox(height: 10),
-            Row(
-              children: [
-                Checkbox(
-                  value: _isWillingToRelocate,
-                  onChanged: (value) {
-                    setState(() {
-                      _isWillingToRelocate = value!;
-                    });
-                  },
-                ),
-                const Text("Willing to Relocate"),
-              ],
-            ),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: _saveContactInfo,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.brown,
-                padding: const EdgeInsets.symmetric(vertical: 15),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(15),
-                ),
-              ),
-              child: const Text('Save', style: TextStyle(fontSize: 18, color: Colors.white)),
-            ),
-            SizedBox(height: 30),
-          ],
-        ),
-      ),
+    );
+  }
 
-      bottomNavigationBar: Container(
-        color: Colors.black,
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: [
-            GestureDetector(
-              onTap: () {
-                Navigator.push(context, MaterialPageRoute(builder: (context) => MenuPage(userId: widget.userId)),
-                );
-              },
-              child: const Icon(FontAwesomeIcons.home, color: Colors.white, size: 24),
-            ),
-            GestureDetector(
-              onTap: () {
-                Navigator.push(context, MaterialPageRoute(builder: (context) => JobPage(userId: widget.userId)),
-                );
-              },
-              child: const Icon(FontAwesomeIcons.thLarge, color: Colors.white, size: 24),
-            ),
-            GestureDetector(
-              onTap: () {
-                Navigator.push(context, MaterialPageRoute(builder: (context) => NotificationPage(userId: widget.userId)),
-                );
-              },
-              child: const Icon(FontAwesomeIcons.bell, color: Colors.white, size: 24),
-            ),
-            GestureDetector(
-              onTap: () {
-                Navigator.push(context, MaterialPageRoute(builder: (context) => ProfilePage(userId: widget.userId)),
-                );
-              },
-              child: const Icon(FontAwesomeIcons.userCircle, color: Colors.white, size: 24),
-            ),
-          ],
+  Widget _buildTextField(TextEditingController controller, String label) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: TextField(
+        controller: controller,
+        decoration: InputDecoration(
+          labelText: label,
+          border: const OutlineInputBorder(),
         ),
       ),
     );

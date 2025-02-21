@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:job_bridge/pages/start_page_sec.dart';
 import 'login_page.dart';
 import 'register_page.dart';
 
@@ -41,7 +42,7 @@ class _StartPageState extends State<StartPage> {
           // Navigate to Login page when user taps anywhere
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => LoginPage()),
+            MaterialPageRoute(builder: (context) => StartPageSec()),
           );
         },
         child: Padding(
@@ -67,10 +68,10 @@ class _StartPageState extends State<StartPage> {
                   color: Colors.white,
                 ),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 18),
               const Text(
-                "Look for jobs here",
-                style: TextStyle(fontSize: 18, color: Colors.white,),
+                "Connecting Skills to Opportunities",
+                style: TextStyle(fontSize: 18, color: Colors.white, fontWeight: FontWeight.bold),
               ),
             ],
           ),

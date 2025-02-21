@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:job_bridge/components/my_textfield.dart';
 import 'package:job_bridge/pages/menu_page.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'skills_page.dart';
 import 'login_page.dart';
 
 class RegPage extends StatefulWidget {
@@ -17,6 +18,7 @@ class _RegPageState extends State<RegPage> {
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
   final usernameController = TextEditingController();
+  final fullnameController = TextEditingController();
   final confirmPasswordController = TextEditingController();
 
   // Sign user up method
@@ -25,7 +27,8 @@ class _RegPageState extends State<RegPage> {
     if (emailController.text.isEmpty ||
       passwordController.text.isEmpty ||
       confirmPasswordController.text.isEmpty ||
-      usernameController.text.isEmpty) {
+      usernameController.text.isEmpty ||
+      fullnameController.text.isEmpty) {
     showErrorMessage('Please fill in all fields');
     return;
   }
@@ -69,7 +72,10 @@ class _RegPageState extends State<RegPage> {
       await ref.doc(uid).set({
         'email': emailController.text,
         'username': usernameController.text,
-      });
+        'fullname': fullnameController.text,
+        'saved_jobs': [],
+        'skills': [],
+      }, SetOptions(merge: true));
 
       Navigator.of(context).pop(); // Close the loading dialog
       ScaffoldMessenger.of(context)
@@ -78,7 +84,7 @@ class _RegPageState extends State<RegPage> {
       // Navigate to MenuPage after successful registration
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
-          builder: (context) => MenuPage(userId: uid),
+          builder: (context) => SkillsPage(userId: uid),
         ),
       );
     } on FirebaseAuthException catch (e) {
@@ -107,7 +113,7 @@ class _RegPageState extends State<RegPage> {
               onPressed: () => Navigator.of(context).pop(),
               child: const Text(
                 'Close',
-                style: TextStyle(color: Colors.white),
+                style: TextStyle(color: Color.fromARGB(255, 5, 52, 92)),
               ),
             ),
           ],
@@ -150,6 +156,15 @@ class _RegPageState extends State<RegPage> {
                         color: Colors.white,
                         fontSize: 16,
                       ),
+                    ),
+
+                    const SizedBox(height: 15),
+
+                    // Username textfield
+                    MyTextfield(
+                      controller: fullnameController,
+                      hintText: 'Name',
+                      obscureText: false,
                     ),
                 
                     const SizedBox(height: 15),
@@ -202,7 +217,7 @@ class _RegPageState extends State<RegPage> {
                         ),
                       ),
                       onPressed: signUserUp,
-                      child: const Text('Sign Up'),
+                      child: const Text('Sign Up', style: TextStyle(fontWeight: FontWeight.bold),),
                     ),
                 
                     const SizedBox(height: 30),
@@ -249,7 +264,7 @@ class _RegPageState extends State<RegPage> {
                           onTap: () {
                             Navigator.of(context).push(
                               MaterialPageRoute(
-                                builder: (context) => const LoginPage(),
+                                builder: (context) => LoginPage(),
                               ),
                             );
                           },
